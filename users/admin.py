@@ -15,6 +15,7 @@ class CustomUserModelAdmin(UserAdmin):
                     "is_active",
                     "is_staff",
                     "is_superuser",
+                    "phone_number",
                     "groups",
                     "user_permissions",
                 ),
@@ -27,9 +28,9 @@ class CustomUserModelAdmin(UserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "usable_password", "password1", "password2"),
+                "fields": ("email", "phone_number", "usable_password", "password1", "password2"),
             },
         ),
     )
-    list_display = ("id", "email", "is_active", "is_staff")
+    list_display = ("id", "email", "phone_number", "is_active", "is_staff")
     ordering = ("email",)
