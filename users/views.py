@@ -15,7 +15,7 @@ from .serializers import (
 from .models import ConfirmationCode, CustomUser
 import random
 import string
-
+from rest_framework.permissions import IsAuthenticated
 
 class AuthorizationAPIView(CreateAPIView):
     serializer_class = AuthValidateSerializer
