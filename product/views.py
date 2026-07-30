@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from common.permissions import CanEdit, IsAnonymous, IsModerator, IsNotModerator, IsOwner
+from common.permissions import CanEdit, IsAnonymous, IsOwner
+from common.validators import validate_adult_from_token
 
 from .models import Category, Product, Review
 from .serializers import (
@@ -75,9 +76,11 @@ class ProductListCreateAPIView(ListCreateAPIView):
     queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
-    permission_classes = [IsAnonymous | (IsOwner & IsNotModerator)]
+    permission_classes = [IsOwner]
 
     def post(self, request, *args, **kwargs):
+        validate_adult_from_token(request)
+
         serializer = ProductValidateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -100,12 +103,17 @@ class ProductListCreateAPIView(ListCreateAPIView):
             data=ProductSerializer(product).data, status=status.HTTP_201_CREATED
         )
 
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        print("email", request.auth.get("email"))
+        return response
+
 
 class ProductDetailAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
     lookup_field = "id"
-    permission_classes = [IsAnonymous | IsModerator | (CanEdit & IsOwner)]
+    permission_classes = [(CanEdit & IsOwner) | IsAnonymous]
 
     def put(self, request, *args, **kwargs):
         product = self.get_object()
