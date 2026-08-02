@@ -6,6 +6,10 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import ConfirmationCode, CustomUser
 
 
+class OAuthSerializer(serializers.Serializer):
+    code = serializers.CharField()
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -13,8 +17,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["email"] = user.email
         token["is_staff"] = user.is_staff
         token["is_active"] = user.is_active
-        if user.birth_date:
-            token["birth_date"] = user.birth_date.isoformat()
         return token
 
 

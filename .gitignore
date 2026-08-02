@@ -22,3 +22,4 @@ db.sqlite3
 !**/migrations/__init__.py
 
 .vscode
+google-scopes.txt

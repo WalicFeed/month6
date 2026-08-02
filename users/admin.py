@@ -9,14 +9,17 @@ class CustomUserModelAdmin(UserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (
+            "Personal info",
+            {"fields": ("first_name", "last_name", "phone_number", "birth_date")},
+        ),
+        (
             "Permissions",
             {
                 "fields": (
                     "is_active",
                     "is_staff",
                     "is_superuser",
-                    "phone_number",
-                    "birth_date",
+                    "registration_source",
                     "groups",
                     "user_permissions",
                 ),
@@ -29,9 +32,28 @@ class CustomUserModelAdmin(UserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "phone_number", "birth_date", "usable_password", "password1", "password2"),
+                "fields": (
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "phone_number",
+                    "birth_date",
+                    "usable_password",
+                    "password1",
+                    "password2",
+                ),
             },
         ),
     )
-    list_display = ("id", "email", "phone_number", "birth_date", "is_active", "is_staff")
+    list_display = (
+        "id",
+        "email",
+        "first_name",
+        "last_name",
+        "phone_number",
+        "birth_date",
+        "is_active",
+        "is_staff",
+        "registration_source",
+    )
     ordering = ("email",)
