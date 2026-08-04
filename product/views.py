@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -84,13 +85,10 @@ class ProductListCreateAPIView(ListCreateAPIView):
         serializer = ProductValidateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Get validated data
         title = serializer.validated_data.get("title")
         description = serializer.validated_data.get("description")
         price = serializer.validated_data.get("price")
         category = serializer.validated_data.get("category")
-
-        # Create product
         product = Product.objects.create(
             title=title,
             description=description,
@@ -104,8 +102,12 @@ class ProductListCreateAPIView(ListCreateAPIView):
         )
 
     def get(self, request, *args, **kwargs):
+        cached_data = cache.get("product_list")
+        if cached_data:
+            print("______________redis_data")
+            return Response(data=cached_data, status=status.HTTP_200_OK)
         response = super().get(request, *args, **kwargs)
-        print("email", request.auth.get("email"))
+        cache.set("product_list", response.data, timeout=60) 
         return response
 
 

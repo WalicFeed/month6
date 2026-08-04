@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.core.cache import cache
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,7 +13,7 @@ from .serializers import (
     AuthValidateSerializer,
     ConfirmationSerializer
 )
-from .models import ConfirmationCode, CustomUser
+from .models import CustomUser, CONFIRMATION_CODE_TIME, confirmation_code_cache_key
 import random
 import string
 from rest_framework.permissions import IsAuthenticated
@@ -53,7 +54,6 @@ class RegistrationAPIView(CreateAPIView):
         password = serializer.validated_data['password']
         phone_number = serializer.validated_data.get('phone_number', '')
 
-        # Use transaction to ensure data consistency
         with transaction.atomic():
             user = CustomUser.objects.create_user(
                 email=email,
@@ -61,15 +61,8 @@ class RegistrationAPIView(CreateAPIView):
                 phone_number=phone_number,
                 is_active=False
             )
-
-            # Create a random 6-digit code
             code = ''.join(random.choices(string.digits, k=6))
-
-            confirmation_code = ConfirmationCode.objects.create(
-                user=user,
-                code=code
-            )
-
+            cache.set(confirmation_code_cache_key(user.id), code, timeout=CONFIRMATION_CODE_TIME)
         return Response(
             status=status.HTTP_201_CREATED,
             data={
@@ -84,18 +77,13 @@ class ConfirmUserAPIView(CreateAPIView):
     def post(self, request):
         serializer = ConfirmationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         user_id = serializer.validated_data['user_id']
-
         with transaction.atomic():
             user = CustomUser.objects.get(id=user_id)
             user.is_active = True
             user.save()
-
             token, _ = Token.objects.get_or_create(user=user)
-
-            ConfirmationCode.objects.filter(user=user).delete()
-
+            cache.delete(confirmation_code_cache_key(user_id))
         return Response(
             status=status.HTTP_200_OK,
             data={
