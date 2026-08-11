@@ -5,6 +5,7 @@ __pycache__/
 __pypackages__/
 
 celerybeat.pid
+celerybeat-schedule
 celerybeat-schedule.db
 
 .env

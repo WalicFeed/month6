@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from common.permissions import CanEdit, IsAnonymous, IsOwner
-from common.validators import validate_adult_from_token
+from product.tasks import add
 
 from .models import Category, Product, Review
 from .serializers import (
@@ -77,18 +77,19 @@ class ProductListCreateAPIView(ListCreateAPIView):
     queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
     pagination_class = CustomPagination
-    permission_classes = [IsOwner]
+    permission_classes = [IsOwner | IsAnonymous]
 
     def post(self, request, *args, **kwargs):
-        validate_adult_from_token(request)
-
         serializer = ProductValidateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        # Get validated data
         title = serializer.validated_data.get("title")
         description = serializer.validated_data.get("description")
         price = serializer.validated_data.get("price")
         category = serializer.validated_data.get("category")
+
+        # Create product
         product = Product.objects.create(
             title=title,
             description=description,
@@ -102,12 +103,16 @@ class ProductListCreateAPIView(ListCreateAPIView):
         )
 
     def get(self, request, *args, **kwargs):
+        add.delay(5, 8)
+        # from time import sleep
+
+        # sleep(15)
         cached_data = cache.get("product_list")
         if cached_data:
-            print("______________redis_data")
+            print("_________________redis_data")
             return Response(data=cached_data, status=status.HTTP_200_OK)
         response = super().get(request, *args, **kwargs)
-        cache.set("product_list", response.data, timeout=60) 
+        cache.set("product_list", response.data, timeout=60)
         return response
 
 
